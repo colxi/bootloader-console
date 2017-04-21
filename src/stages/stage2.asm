@@ -15,20 +15,21 @@ bootloader_Stage2:
 	; Data Segment
 	mov 	ds, 	ax 				; set data segment to 0x00
 
-	mov dx , 0x0100
-	call setCursor
+    ; set cursor
+    mov dh, 1
+    mov dl, 0
+    call setCursor
 
+    ; output: both stages loaded!
     mov ax, s_stagesLoaded
     call print
-    call printLF
 
+    ; output: title
     mov ax, s_title
     call print
-    call printLF
-
-    call printLF
 
 
+    ; output: BIOS FLAGS
     mov     ax,     s_BIOS
     call    print
 
@@ -72,8 +73,8 @@ bootloader_Stage2:
     RET
 
 
-s_stagesLoaded  db 		'1st and 2nd Bootloader Stages Loaded!' , 0
-s_title         db      'vBootloader : a 16-bit x86 assembly verbose bootloader', 0
+s_stagesLoaded  db 		'1st and 2nd Bootloader Stages Loaded!' , 10, 0
+s_title         db      'vBootloader : a 16-bit x86 assembly verbose bootloader', 10, 10, 0
 s_BIOS          db      '[+] Reading BIOS Hardware detection FLAGS...', 0 ;
 s_floppy        db      '    - Floppy Devices     : ',  0
 s_floppyIn      db      '    - Floppy Inserted    : ',  0

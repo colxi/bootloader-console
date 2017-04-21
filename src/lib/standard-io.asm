@@ -67,9 +67,20 @@ printChar:
         RET
 
     .char_LF:
+        call printLF
         ;call    printLF
         jmp     .done
 
+
+
+printLF:
+
+    call getCursor
+    add dh,1
+    mov dl, 0
+    call setCursor
+
+    RET
 
 
 
@@ -105,16 +116,16 @@ setCursor:
     pop ax
     RET
 
-;**************************************************
-;
-;   getCursor () - Gets Cursor position
-;   + input :
-;       (none)
-;   + output :
-;       DH = Row
-;       DL = Column
-;
-;**************************************************
+;;**************************************************
+ ;
+ ;   getCursor () - Gets Cursor position
+ ;   + input :
+ ;       (none)
+ ;   + output :
+ ;       DH = Row
+ ;       DL = Column
+ ;
+ ;**************************************************
 getCursor:
     push ax
     push bx
@@ -188,14 +199,6 @@ printByteHex:
     pop     dx
     pop     bx
     pop     ax
-    RET
-
-
-printLF:
-    call getCursor
-    add dh,1
-    mov dl, 0
-    call setCursor
     RET
 
 
