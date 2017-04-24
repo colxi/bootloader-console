@@ -12,8 +12,9 @@ jmp main
 
 ; Use FASM preprocessing to calculate Sector2 Size
 ; and calculate thr number of disk sectors to be loaded.
-STAGE2_SIZE 		   EQU  (___stage2_end_offset - ___stage2_start_offset)
-STAGE2_SECTORS_COUNT   EQU  ( ( STAGE2_SIZE - ( STAGE2_SIZE mod 512) ) / 512 )+1
+STAGE2_SIZE 		   =  (___stage2_end_offset - ___stage2_start_offset)
+STAGE2_SECTORS_COUNT   =  ( ( STAGE2_SIZE - ( STAGE2_SIZE mod 512) ) / 512 )+1
+
 STAGE2_SEGMENT		   EQU  0x0000
 STAGE2_OFFSET		   EQU  0x7E00
 

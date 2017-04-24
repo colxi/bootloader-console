@@ -1,3 +1,4 @@
+org 0x7E00
 use16
 ;-------------------------------------------------------------------------------
 ;
@@ -21,5 +22,6 @@ include 'lib/string-manipulation.asm'
 ___stage2_end_offset:
 
 ; Pad image to multiple size of 512 bytes (sector align).
-times 512 + (  15 * 512 ) - ($ - $$) db 0x00
+times 512 + (  STAGE2_SECTORS_COUNT * 512 ) - ($ - $$) db 0x00
+
 
