@@ -17,8 +17,9 @@ bootloader_Stage2:
 
 
 include 'lib/tty.asm'
+include 'lib/string-manipulation.asm'
 ___stage2_end_offset:
 
 ; Pad image to multiple size of 512 bytes (sector align).
-times 512 + (  STAGE2_SECTORS_COUNT * 512 ) - ($ - $$) db 0x00
+times 512 + (  15 * 512 ) - ($ - $$) db 0x00
 

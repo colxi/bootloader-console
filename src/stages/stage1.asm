@@ -26,10 +26,10 @@ EMPTY_STRING  	 db 	'', 0
 
 s_preparing      db    '[Bootloader]',  10, 0
 s_stage1Loaded 	 db    'Stage 1 loaded at 0x0000:0x7C00 (512 bytes)' , 10, 0
-s_ReadingDisk	 db    'Reading Stage 2 from Disk (sector 2)' , 10, 0
+s_ReadingDisk	 db    'Read Stage 2 from Disk (sector 2)' , 10, 0
 s_stage2Loaded_1 db    'Stage 2 Loaded at 0x0000:0x7E00 (' , 0
 s_stage2Loaded_2 db    ' bytes + sector padding)' , 10, 0
-s_FlDiskReadErr  db    'Disk Read Error!' , 10, 0
+s_FlDiskReadErr  db    'Disk Read ERR' , 10, 0
 s_bootl_ready    db    'Ready!', 10, 10, 0
 
 
@@ -105,6 +105,7 @@ main:
 	    call    print
 	    mov 	ax, 	STAGE2_SIZE
 	    call 	uitoa
+	    mov 	ax, 	cx
 	    call 	print
 	    mov 	ax, 	s_stage2Loaded_2
 	    call 	print
@@ -130,10 +131,11 @@ main:
  ;   + input :
  ;       AX = Unsigned integer to convert
  ;   + output :
- ;       AX = Pointer to string in memory
+ ;       CX = Pointer to string in memory
  ;
  ;**************************************************
 uitoa:
+    push ax
     push bx
     push dx
 
@@ -149,10 +151,11 @@ uitoa:
         jz      .done               ; end when ax reach 0
         jmp     .nextDigit          ; else... get next digit
     .done:
-        mov     ax,     si          ; store buffer pointer in ax
+        mov     cx,     si          ; store buffer pointer in ax
 
         pop dx
         pop bx
+        pop ax
         RET
     .buffer: times 7 db 0         	; 16bit integer max length=5
                                     ; + extra byte is added to fit thr negative
@@ -203,6 +206,9 @@ readSectors:
  ; Routine: output string in AX to screen
  ;**************************************************
 print:
+    pushf
+
+    cld 								; CLear Direction flag. Direction:ASC
     mov     si,     ax                  ; copy input address to Source Index
     .nextChar:
         lodsb                           ; load string byte: retrieves a byte of data from the location pointed
@@ -212,6 +218,7 @@ print:
         call    printChar               ; Otherwise, print it
         jmp     .nextChar               ; and go with next char
     .done:
+    	popf
         RET
 
 ;;******************************************************************************
@@ -327,37 +334,6 @@ getCursor:
     pop bx
     pop ax
     RET
-
-;;******************************************************************************
- ;  Input:
- ;       AX - pointer to String 1
- ;       BX - pointer to string 2
- ;  Ouptut:
- ;       AX - 0x01 (equal) | 0x00 (not equal)
- ;
- ;*******************************************************************************
-stringCmp:
-    mov     si,     ax                  ; ds:SI points to first string
-    mov     di,     bx                  ; ds:DI points to second string
-
-    mov     ah,     0x01                ; set to TRUE comparation result
-    dec     di                          ; decrement ds:di pointer
-    .nextChar:
-        inc     di                      ; next character in string 2
-        lodsb                           ; load into AL next char from string 1
-                                        ; ( lodsb will autoincrement SI )
-        cmp     [di],   al              ; Compare characters
-        jne     .notEqual               ; break loop if different
-
-        cmp     al,     0x00            ; ¿ end of string ?
-        jne     .nextChar              ; no... get next char
-        jmp     .done                   ; yes... done!
-    .notEqual:
-        mov     ah,     0x00            ; set FALSE comparation result
-    .done:
-        mov     al,     ah
-        mov     ah,     0x00
-        RET
 
 clearScreen:
     pusha
