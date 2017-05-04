@@ -7,7 +7,7 @@
 ;                   and equivalent ASCII representations.
 ;
 ;                   Contents:
-;                   itoa | uitoa | hextoa | bintoa
+;                   itoa | uitoa | hextoa | bintoa | atoi
 ;
 ;  Version        : 1.0
 ;  Created        : 24/03/2017
@@ -159,3 +159,56 @@ bintoa:
     RET
     .buffer:    times   8 db 0,0    ; 8 bytes, one for each bit  + null
 
+
+
+;;**************************************************
+ ;
+ ;   atoi() - Returns the DECIMAL representation
+ ;            of the UNSIGNED numeric ASCII string.
+ ;   + input :
+ ;       AX = Pointer to UNSIGNED numeric string
+ ;   + output :
+ ;       AX = Decimal value
+ ;
+;**************************************************
+atoi:
+    pushf
+    push    si
+    push    bx
+    push    cx
+
+    mov     si,     ax          ; set string pointer in SI
+    xor     bx,     bx          ; clear BX
+    cld                         ; CLear Direction flag. Direction:ASC
+
+    .nextDigit:
+        lodsb                   ; Load into AL the SI byte
+                                ; ...and increment SI
+        cmp     al,     0x00    ; check if its string end (null char)
+        je      .done           ; it is! done!
+
+        cmp     al,     '0'     ; if char is lower than "0" is not numerical...
+        jb      .err_noascii    ; handle error
+        cmp     al,     '9'     ; if char is higher than "9" is not numerical...
+        ja      .err_noascii    ; handle error
+
+        sub     al,     30h     ; ascii '0'=30h, ascii '1'=31h...etc.
+        mov     ah,     0x00    ; clear the AH register
+        push    ax
+        mov     ax,     bx      ; BX will have final value
+        mov     cx,     10      ; prepare multiplication
+        mul     cx              ; AX=AX*10
+        mov     bx,     ax
+        pop     ax
+        add     bx,     ax      ; BX = BX + AX
+        jmp     .nextDigit
+    .err_noascii:
+        mov     bx,     0x0000  ; NULL the result value
+    .done:
+        mov     ax,     bx
+
+        pop     cx
+        pop     bx
+        pop     si
+        popf
+        RET

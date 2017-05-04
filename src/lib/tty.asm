@@ -4,13 +4,11 @@ tty_buffer:         times TTY_BUFFER_SIZE db 0  ; Buffer to store keystrokes
 tty_buffer_extra    db 0                        ; Ensures NULL ending when input
                                                 ; length = TTY_BUFFER_SIZE. This
                                                 ; prevents buffer overflow.
+tty_params_address: dw 0                        ; Store the address of the begin
+                                                ; of the arguments in tty cmmand
 s_unknown_command   db "Unknown command : ", 0
-s_help_command      db "Available commands : help | clear | ...", 10, 0
 
-tty_commands:
-    .help           db "help", 0
-    .clear          db "clear", 0
-
+include 'tty/command-def.asm'
 
 initTTY:
     .prompt:
@@ -32,8 +30,7 @@ initTTY:
 
         cmp     al, 32                  ; if is not a printable character...
         jb     .getKey                  ; discard keystroke
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         cmp     cx , TTY_BUFFER_SIZE
         jb     .addChar                 ; if still space in buffer add char
 
@@ -67,64 +64,49 @@ initTTY:
     ;***************************************************************************
     .printEnter:
         mov     [bx],   byte 0          ; insert null char at the end of string
-        mov     ax,     tty_buffer
         call    printLF                 ; print line break
         call    interpreterTTY          ; call interpreter
         jmp     .prompt                 ; restart prompt
-        RET
-
 
 
 interpreterTTY:
     pusha
+    push si
 
-    mov     ax,     tty_buffer
-    call    trim                        ; trim the inserted command
-    mov     bx,     ax
+    mov     ax,     tty_buffer      ; prepare to trim
+    call    trim                    ; trim the inserted command
 
-    ; -----------------------------------------------------------  test (empty)
-    mov     ax,     EMPTY_STRING
-    call    strcmp
-    cmp     cx,     0x01
-    je      .done
-    ; -----------------------------------------------------------  test 'help'
-    mov     ax,     tty_commands.help
-    call    strcmp
-    cmp     cx,     0x01
-    je      ._ttyHelp
-    ; -----------------------------------------------------------  test 'clear'
-    mov     ax,     tty_commands.clear
-    call    strcmp
-    cmp     cx,     0x01
-    je      ._ttyClear
-    ; -----------------------------------------------------------  (...)
     ;
-    ; (...)
+    ; SEARCH ARGUMENTS IN STRING
     ;
-    ; -----------------------------------------------------------UNKNOWN COMMAND
-    mov     ax,     s_unknown_command
-    call    print                       ; print error string
-    mov     ax,     tty_buffer          ; move to AX the buffer begining pointer
-    call    print                       ; print user input
-    call    printLF                     ; jump to new line
-    jmp     .done
-    ._ttyHelp:
-        call    ttyHelp
-        jmp     .done
-    ._ttyClear:
-        call    ttyClear
-        jmp     .done
-    .done:
-        popa
-        RET
-
-ttyHelp:
-    mov ax , s_help_command
-    call print
-    RET
-
-
-ttyClear:
-    call clearScreen
-    RET
-
+    mov     bl,     " "             ; pepare to search arguments in command
+    call    strchr                  ; search space character in tty_buffer
+    cmp     cx,  0x0000             ; if no arguments found...
+    je      .processCommand         ; proccess command
+    ; Args found!
+    mov     si, cx                  ; Split string, inserting NULL char...
+    mov     [si], byte  0x00        ; ...in the position on the SPACE char
+    inc     cx                      ; move pointer after the NULL char inserter
+    mov     [tty_params_address], cx; and set pointer to arguments variable
+    ;
+    ; PROCESS COMMAND
+    ;
+    .processCommand:
+        mov     bx,     tty_buffer  ; set second operand for strcmp
+        ; -----------------------------------------------------------  test (empty)
+        mov     ax,     EMPTY_STRING
+        call    strcmp
+        cmp     cx,     0x01
+        je      .done
+        ; -----------------------------------------------------------
+        include 'tty/command-identify.asm'
+        ; -----------------------------------------------------------UNKNOWN COMMAND
+        mov     ax,     s_unknown_command
+        call    print                       ; print error string
+        mov     ax,     tty_buffer          ; move to AX the buffer begining pointer
+        call    print                       ; print user input
+        call    printLF                     ; jump to new line
+        .done:
+            pop si
+            popa
+            RET
