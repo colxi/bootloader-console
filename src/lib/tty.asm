@@ -1,7 +1,7 @@
 use16
 TTY_BUFFER_SIZE     EQU 512                     ; Max sie of the tty input
 tty_buffer:         times TTY_BUFFER_SIZE db 0  ; Buffer to store keystrokes
-tty_buffer_extra    db 0                        ; Ensures NULL ending when input
+tty_buffer_ending   db 0                        ; Ensures NULL ending when input
                                                 ; length = TTY_BUFFER_SIZE. This
                                                 ; prevents buffer overflow.
 tty_params_address: dw 0                        ; Store the address of the begin

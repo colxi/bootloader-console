@@ -4,12 +4,12 @@
 ;
 ;  Description    : 16BIT FASM assembly minimal library focused into provide
 ;                   the essential resources, to convert byte values, to diferent
-;                   and equivalent ASCII representations.
+;                   and equivalent ASCII representations, and viceversa.
 ;
 ;                   Contents:
-;                   itoa | uitoa | hextoa | bintoa | atoi
+;                   itoa | uitoa | hextoa | bintoa || atoi
 ;
-;  Version        : 1.0
+;  Version        : 1.1
 ;  Created        : 24/03/2017
 ;  Author         : colxi
 ;
@@ -28,9 +28,13 @@ use16
  ;       AX = Signed Integer to convert
  ;   + output :
  ;       AX = Pointer to string in memory
+ ;   + Destroys :
+ ;       (none)
  ;
  ;**************************************************
 itoa:
+    push    si
+
     test    ax,     ax              ; check if is negative
     js      .negative
         call    uitoa               ; not negative! call uitoa
@@ -42,6 +46,8 @@ itoa:
                                     ; -SI was set in the previous uitoa() call-
         mov     [si],   byte "-"    ; insert negative symbol before number
         mov     ax,     si          ; update updated SI value into AX
+
+        pop     si
         RET
 
 
@@ -56,11 +62,14 @@ itoa:
  ;       AX = Unsigned integer to convert
  ;   + output :
  ;       AX = Pointer to string in memory
+ ;   + Destroys :
+ ;       (none)
  ;
  ;**************************************************
 uitoa:
-    push bx
-    push dx
+    push    bx
+    push    dx
+    push    si
 
     lea     si,     [.buffer+6]     ; set pointer to last byte in buffer
     mov     bx,     10              ; set divider
@@ -76,8 +85,9 @@ uitoa:
     .done:
         mov     ax,     si          ; store buffer pointer in ax
 
-        pop dx
-        pop bx
+        pop     si
+        pop     dx
+        pop     bx
         RET
     .buffer: times 6 db 0,0         ; 16bit integer max length=5 + null
                                     ; extra byte is added to fit thr negative
@@ -93,12 +103,15 @@ uitoa:
  ;       AL = Byte to convert
  ;   + output :
  ;       AX = Pointer to string in memory
+ ;   + Destroys :
+ ;      (none)
  ;
 ;**************************************************
 hextoa:
     push    bx
     push    cx
     push    dx
+    push    si
 
     mov     si,     .hexMap         ; Pointer to hex-character table
     xor     bh,     bh              ; clear BH register
@@ -114,12 +127,13 @@ hextoa:
     mov     [.buffer],   cx         ; save result to char buffer
     mov     ax,     .buffer         ; store in AX address to buffer
 
+    pop     si
     pop     dx
     pop     cx
     pop     bx
     RET
-    .buffer:    times 2 db 0, 0     ; 2 bytes, one for each character + null
-    .hexMap:    db    '0123456789ABCDEF'; ASCII mapping
+    .buffer:    db      0x00, 0x00,  0x00       ; one for each character + null
+    .hexMap:    db      '0123456789ABCDEF'      ; ASCII mapping
 
 
 
@@ -131,11 +145,14 @@ hextoa:
  ;       AL = Byte to convert
  ;   + output :
  ;       AX = Pointer to string in memory
+ ;   + Destroys :
+ ;       (none)
  ;
 ;**************************************************
 bintoa:
     push    bx
     push    cx
+    push    si
 
     mov     cl,     7               ; initialize counter
     lea     si,     [.buffer]       ; set pointer to buffer
@@ -154,6 +171,7 @@ bintoa:
 
     mov     ax,     .buffer         ; store buffer pointer in ax
 
+    pop     si
     pop     cx
     pop     bx
     RET
@@ -169,6 +187,8 @@ bintoa:
  ;       AX = Pointer to UNSIGNED numeric string
  ;   + output :
  ;       AX = Decimal value
+ ;   + Destroys :
+ ;      (none)
  ;
 ;**************************************************
 atoi:
@@ -205,7 +225,7 @@ atoi:
     .err_noascii:
         mov     bx,     0x0000  ; NULL the result value
     .done:
-        mov     ax,     bx
+        mov     ax,     bx      ; put final result in AX
 
         pop     cx
         pop     bx

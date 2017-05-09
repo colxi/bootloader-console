@@ -10,6 +10,13 @@
 ___stage2_start_offset:
 jmp Stage2
 Stage2:
+    mov     ax,     STAGE2_SIZE
+    call    uitoa
+    mov     ax,     cx
+    call    print
+    mov     ax,     s_stage2Loaded_2
+    call    print
+
     ; output info block
     mov ax, s_bootl_ready
     call print

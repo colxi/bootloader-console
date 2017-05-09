@@ -13,6 +13,11 @@ mov     ax,     tty_commands.boot
 call    strcmp
 cmp     cx,     0x01
 je      ttyBoot
+; -----------------------------------------------------------  test 'bootsec'
+mov     ax,     tty_commands.bootsec
+call    strcmp
+cmp     cx,     0x01
+je      ttyBootsec
 ; -----------------------------------------------------------  (...)
 
 ; (...)
